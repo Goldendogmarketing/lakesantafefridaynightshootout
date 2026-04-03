@@ -23,7 +23,9 @@ export async function GET() {
     if (!dbUrl) {
       dbStatus = 'NO DATABASE URL FOUND';
     } else {
-      const cleanUrl = dbUrl.replace(/[?&]channel_binding=[^&]*/g, '').replace(/\?&/, '?');
+      const u = new URL(dbUrl);
+      u.searchParams.delete('channel_binding');
+      const cleanUrl = u.toString();
       const sql = neon(cleanUrl);
       const result = await sql`SELECT 1 as test`;
       dbStatus = result[0]?.test === 1 ? 'connected OK' : 'unexpected result';

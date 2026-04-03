@@ -3,10 +3,10 @@ import Credentials from 'next-auth/providers/credentials';
 import { compareSync } from 'bcryptjs';
 import { neon } from '@neondatabase/serverless';
 
-function getDbUrl() {
-  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
-  if (!dbUrl) throw new Error('DATABASE_URL is not set');
-  return dbUrl.replace(/[?&]channel_binding=[^&]*/g, '').replace(/\?&/, '?');
+function cleanDbUrl(url: string): string {
+  const u = new URL(url);
+  u.searchParams.delete('channel_binding');
+  return u.toString();
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -20,7 +20,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) return null;
 
-        const sql = neon(getDbUrl());
+        const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL;
+        if (!dbUrl) return null;
+        const sql = neon(cleanDbUrl(dbUrl));
         const users = await sql`SELECT * FROM admin_users WHERE username = ${credentials.username as string}`;
         const user = users[0];
 

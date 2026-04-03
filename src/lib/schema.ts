@@ -1,8 +1,14 @@
 import { neon } from '@neondatabase/serverless';
 
+function cleanDbUrl(url: string): string {
+  const u = new URL(url);
+  u.searchParams.delete('channel_binding');
+  return u.toString();
+}
+
 export async function initializeDatabase() {
-  const dbUrl = (process.env.DATABASE_URL || process.env.POSTGRES_URL || '').replace(/[?&]channel_binding=[^&]*/g, '').replace(/\?&/, '?');
-  const sql = neon(dbUrl);
+  const dbUrl = process.env.DATABASE_URL || process.env.POSTGRES_URL || '';
+  const sql = neon(cleanDbUrl(dbUrl));
 
   await sql`
     CREATE TABLE IF NOT EXISTS admin_users (
