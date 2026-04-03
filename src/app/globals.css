@@ -1,0 +1,38 @@
+@import url('https://fonts.googleapis.com/css2?family=Dancing+Script:wght@400;700&display=swap');
+@import "tailwindcss";
+
+:root {
+  --background: #faf6f0;
+  --foreground: #1a0e04;
+  --primary: #c45e10;
+  --primary-dark: #9a4a0d;
+  --primary-light: #e8940c;
+  --gold: #f5b731;
+  --dark: #1a0e04;
+  --dark-mid: #2a1506;
+  --warm-gray: #3d2b1a;
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-primary: var(--primary);
+  --color-primary-dark: var(--primary-dark);
+  --color-primary-light: var(--primary-light);
+  --color-gold: var(--gold);
+  --color-dark: var(--dark);
+  --color-dark-mid: var(--dark-mid);
+  --color-warm-gray: var(--warm-gray);
+  --font-sans: var(--font-geist-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-cursive: 'Dancing Script', cursive;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+}
+
+.signature-typed {
+  font-family: 'Dancing Script', cursive;
+}
