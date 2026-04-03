@@ -11,7 +11,6 @@ export async function POST(request: NextRequest) {
       waiver_text,
     } = body;
 
-    // Validate Participant 1 (required)
     if (!p1_name?.trim() || !p1_phone?.trim() || !p1_signature_data || !p1_signature_type) {
       return NextResponse.json({ error: 'Participant 1 name, phone, and signature are required' }, { status: 400 });
     }
@@ -20,43 +19,31 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Invalid signature type' }, { status: 400 });
     }
 
-    const db = getDb();
+    const sql = getDb();
     const ip = request.headers.get('x-forwarded-for') || request.headers.get('x-real-ip') || 'unknown';
 
-    const insertParticipant = db.prepare(
-      'INSERT INTO participants (full_name, phone, team_partner_name) VALUES (?, ?, ?)'
-    );
-    const insertWaiver = db.prepare(`
+    const participantResult = await sql`
+      INSERT INTO participants (full_name, phone, team_partner_name)
+      VALUES (${p1_name.trim()}, ${p1_phone.trim()}, ${p2_name?.trim() || null})
+      RETURNING id
+    `;
+    const participantId = participantResult[0].id;
+
+    await sql`
       INSERT INTO waivers (
         participant_id, waiver_text,
         p1_name, p1_phone, p1_signature_data, p1_signature_type,
         p2_name, p2_phone, p2_signature_data, p2_signature_type,
         guardian_name, guardian_relationship, guardian_signature_data, guardian_signature_type,
         ip_address
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-    `);
-
-    const transaction = db.transaction(() => {
-      const result = insertParticipant.run(
-        p1_name.trim(),
-        p1_phone.trim(),
-        p2_name?.trim() || null
-      );
-      const participantId = result.lastInsertRowid;
-
-      insertWaiver.run(
-        participantId,
-        waiver_text || '',
-        p1_name.trim(), p1_phone.trim(), p1_signature_data, p1_signature_type,
-        p2_name?.trim() || null, p2_phone?.trim() || null, p2_signature_data || null, p2_signature_type || null,
-        guardian_name?.trim() || null, guardian_relationship?.trim() || null, guardian_signature_data || null, guardian_signature_type || null,
-        ip
-      );
-
-      return participantId;
-    });
-
-    const participantId = transaction();
+      ) VALUES (
+        ${participantId}, ${waiver_text || ''},
+        ${p1_name.trim()}, ${p1_phone.trim()}, ${p1_signature_data}, ${p1_signature_type},
+        ${p2_name?.trim() || null}, ${p2_phone?.trim() || null}, ${p2_signature_data || null}, ${p2_signature_type || null},
+        ${guardian_name?.trim() || null}, ${guardian_relationship?.trim() || null}, ${guardian_signature_data || null}, ${guardian_signature_type || null},
+        ${ip}
+      )
+    `;
 
     return NextResponse.json({ success: true, participantId }, { status: 201 });
   } catch (error) {

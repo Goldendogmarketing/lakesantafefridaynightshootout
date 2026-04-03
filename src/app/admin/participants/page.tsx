@@ -10,8 +10,8 @@ export default async function ParticipantsPage() {
   const session = await auth();
   if (!session) redirect('/admin/login');
 
-  const db = getDb();
-  const participants = db.prepare(`
+  const sql = getDb();
+  const participants = await sql`
     SELECT p.*,
       CASE WHEN w.id IS NOT NULL THEN 1 ELSE 0 END as waiver_signed,
       w.id as waiver_id,
@@ -19,19 +19,17 @@ export default async function ParticipantsPage() {
     FROM participants p
     LEFT JOIN waivers w ON w.participant_id = p.id
     ORDER BY p.created_at DESC
-  `).all() as ParticipantWithWaiver[];
+  ` as ParticipantWithWaiver[];
 
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Participants</h1>
-
       {participants.length === 0 ? (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-12 text-center">
           <p className="text-gray-500">No participants registered yet.</p>
         </div>
       ) : (
         <>
-          {/* Mobile cards */}
           <div className="sm:hidden space-y-4">
             {participants.map(p => (
               <div key={p.id} className="bg-white rounded-xl shadow-sm border border-gray-200 p-4">
@@ -43,25 +41,19 @@ export default async function ParticipantsPage() {
                     <span className="bg-red-100 text-red-700 text-xs px-2 py-1 rounded-full font-medium">Unsigned</span>
                   )}
                 </div>
-                <p className="text-sm text-gray-500">{p.email}</p>
                 <p className="text-sm text-gray-500">{p.phone}</p>
-                <p className="text-sm text-gray-500">Partner: {p.team_partner_name}</p>
+                <p className="text-sm text-gray-500">Partner: {p.team_partner_name || 'N/A'}</p>
                 {p.waiver_id && (
-                  <Link href={`/admin/waivers/${p.waiver_id}`} className="text-sm text-emerald-600 font-medium mt-2 inline-block">
-                    View Waiver &rarr;
-                  </Link>
+                  <Link href={`/admin/waivers/${p.waiver_id}`} className="text-sm text-[#c45e10] font-medium mt-2 inline-block">View Waiver &rarr;</Link>
                 )}
               </div>
             ))}
           </div>
-
-          {/* Desktop table */}
           <div className="hidden sm:block bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden">
             <table className="w-full">
               <thead>
                 <tr className="bg-gray-50 border-b border-gray-200">
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Name</th>
-                  <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Email</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Phone</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold text-gray-600">Team Partner</th>
                   <th className="px-4 py-3 text-center text-sm font-semibold text-gray-600">Waiver</th>
@@ -73,9 +65,8 @@ export default async function ParticipantsPage() {
                 {participants.map(p => (
                   <tr key={p.id} className="border-b border-gray-100 last:border-0 hover:bg-gray-50">
                     <td className="px-4 py-3 font-medium text-gray-900">{p.full_name}</td>
-                    <td className="px-4 py-3 text-gray-600">{p.email}</td>
                     <td className="px-4 py-3 text-gray-600">{p.phone}</td>
-                    <td className="px-4 py-3 text-gray-600">{p.team_partner_name}</td>
+                    <td className="px-4 py-3 text-gray-600">{p.team_partner_name || 'N/A'}</td>
                     <td className="px-4 py-3 text-center">
                       {p.waiver_signed ? (
                         <span className="inline-block bg-green-100 text-green-700 text-xs px-2 py-1 rounded-full font-medium">Signed</span>
@@ -86,9 +77,7 @@ export default async function ParticipantsPage() {
                     <td className="px-4 py-3 text-gray-500 text-sm">{new Date(p.created_at).toLocaleDateString()}</td>
                     <td className="px-4 py-3">
                       {p.waiver_id && (
-                        <Link href={`/admin/waivers/${p.waiver_id}`} className="text-emerald-600 hover:text-emerald-800 text-sm font-medium">
-                          View
-                        </Link>
+                        <Link href={`/admin/waivers/${p.waiver_id}`} className="text-[#c45e10] hover:text-[#e8940c] text-sm font-medium">View</Link>
                       )}
                     </td>
                   </tr>

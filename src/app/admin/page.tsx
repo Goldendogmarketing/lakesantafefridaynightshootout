@@ -9,23 +9,27 @@ export default async function AdminDashboard() {
   const session = await auth();
   if (!session) redirect('/admin/login');
 
-  const db = getDb();
-  const participantCount = (db.prepare('SELECT COUNT(*) as count FROM participants').get() as { count: number }).count;
-  const waiverCount = (db.prepare('SELECT COUNT(*) as count FROM waivers').get() as { count: number }).count;
-  const weekCount = (db.prepare('SELECT COUNT(*) as count FROM tournament_weeks').get() as { count: number }).count;
+  const sql = getDb();
+  const [pCount, wCount, weekCount] = await Promise.all([
+    sql`SELECT COUNT(*) as count FROM participants`,
+    sql`SELECT COUNT(*) as count FROM waivers`,
+    sql`SELECT COUNT(*) as count FROM tournament_weeks`,
+  ]);
+
+  const participantCount = Number(pCount[0].count);
+  const waiverCount = Number(wCount[0].count);
+  const weekCountNum = Number(weekCount[0].count);
   const unsignedCount = participantCount - waiverCount;
 
   return (
     <div>
       <h1 className="text-3xl font-bold text-gray-900 mb-8">Dashboard</h1>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-        <StatCard label="Total Participants" value={participantCount} icon="👥" color="bg-emerald-50 text-emerald-700" />
+        <StatCard label="Total Participants" value={participantCount} icon="👥" color="bg-orange-50 text-[#c45e10]" />
         <StatCard label="Waivers Signed" value={waiverCount} icon="📝" color="bg-blue-50 text-blue-700" />
         <StatCard label="Unsigned Waivers" value={unsignedCount} icon="⚠️" color="bg-yellow-50 text-yellow-700" />
-        <StatCard label="Tournament Weeks" value={weekCount} icon="📅" color="bg-purple-50 text-purple-700" />
+        <StatCard label="Tournament Weeks" value={weekCountNum} icon="📅" color="bg-purple-50 text-purple-700" />
       </div>
-
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
         <Link href="/admin/participants" className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 hover:shadow-md transition-shadow">
           <h2 className="text-xl font-bold text-gray-900 mb-2">👥 Manage Participants</h2>

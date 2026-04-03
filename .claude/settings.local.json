@@ -1,0 +1,22 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(npx create-next-app@latest . --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(npx create-next-app@latest lake-santa-fe --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(cp -r lake-santa-fe/* .)",
+      "Bash(cp -r lake-santa-fe/.* .)",
+      "Bash(rm -rf lake-santa-fe)",
+      "Bash(rm -rf lake-santa-fe node_modules)",
+      "Bash(rm -f AGENTS.md CLAUDE.md eslint.config.mjs next.config.ts next-env.d.ts package.json package-lock.json postcss.config.mjs README.md tsconfig.json)",
+      "Bash(cd /d)",
+      "Bash(npx create-next-app@latest lake-santa-fe-temp --typescript --tailwind --eslint --app --src-dir --import-alias \"@/*\" --use-npm)",
+      "Bash(cp -r /d/lake-santa-fe-temp/* \"D:/1CLAUDECODE/lake santa fe shoot out/\")",
+      "Bash(cp /d/lake-santa-fe-temp/.gitignore \"D:/1CLAUDECODE/lake santa fe shoot out/\")",
+      "Bash(cp /d/lake-santa-fe-temp/.eslintrc* \"D:/1CLAUDECODE/lake santa fe shoot out/\")",
+      "Bash(rm -rf /d/lake-santa-fe-temp)",
+      "Bash(npm install:*)",
+      "Bash(npm run:*)"
+    ]
+  }
+}

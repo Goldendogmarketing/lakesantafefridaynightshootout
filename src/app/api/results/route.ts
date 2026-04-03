@@ -2,33 +2,30 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/lib/auth';
 import { getDb } from '@/lib/db';
 
-function recalculatePlacements(weekId: number) {
-  const db = getDb();
-  const results = db.prepare(
-    'SELECT id FROM results WHERE week_id = ? ORDER BY total_weight DESC, big_bass_weight DESC'
-  ).all(weekId) as { id: number }[];
-
-  const update = db.prepare('UPDATE results SET placement = ? WHERE id = ?');
-  const transaction = db.transaction(() => {
-    results.forEach((r, i) => {
-      update.run(i + 1, r.id);
-    });
-  });
-  transaction();
+async function recalculatePlacements(weekId: number) {
+  const sql = getDb();
+  const results = await sql`
+    SELECT id FROM results WHERE week_id = ${weekId}
+    ORDER BY total_weight DESC, big_bass_weight DESC NULLS LAST
+  `;
+  for (let i = 0; i < results.length; i++) {
+    await sql`UPDATE results SET placement = ${i + 1} WHERE id = ${results[i].id}`;
+  }
 }
 
 export async function GET(request: NextRequest) {
   const weekId = request.nextUrl.searchParams.get('weekId');
-  const db = getDb();
+  const sql = getDb();
 
   if (weekId) {
-    const results = db.prepare(
-      'SELECT * FROM results WHERE week_id = ? ORDER BY placement ASC, total_weight DESC'
-    ).all(weekId);
+    const results = await sql`
+      SELECT * FROM results WHERE week_id = ${weekId}
+      ORDER BY placement ASC, total_weight DESC
+    `;
     return NextResponse.json(results);
   }
 
-  const results = db.prepare('SELECT * FROM results ORDER BY week_id DESC, placement ASC').all();
+  const results = await sql`SELECT * FROM results ORDER BY week_id DESC, placement ASC`;
   return NextResponse.json(results);
 }
 
@@ -47,14 +44,16 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Number of fish must be between 0 and 5' }, { status: 400 });
   }
 
-  const db = getDb();
-  const result = db.prepare(
-    'INSERT INTO results (week_id, team_name, angler1, angler2, total_weight, num_fish, big_bass_weight, placement) VALUES (?, ?, ?, ?, ?, ?, ?, 0)'
-  ).run(week_id, team_name, angler1, angler2, total_weight || 0, num_fish || 0, big_bass_weight || null);
+  const sql = getDb();
+  const result = await sql`
+    INSERT INTO results (week_id, team_name, angler1, angler2, total_weight, num_fish, big_bass_weight, placement)
+    VALUES (${week_id}, ${team_name}, ${angler1}, ${angler2}, ${total_weight || 0}, ${num_fish || 0}, ${big_bass_weight || null}, 0)
+    RETURNING id
+  `;
 
-  recalculatePlacements(week_id);
+  await recalculatePlacements(week_id);
 
-  return NextResponse.json({ id: result.lastInsertRowid }, { status: 201 });
+  return NextResponse.json({ id: result[0].id }, { status: 201 });
 }
 
 export async function PUT(request: NextRequest) {
@@ -66,14 +65,15 @@ export async function PUT(request: NextRequest) {
 
   if (!id) return NextResponse.json({ error: 'Missing result ID' }, { status: 400 });
 
-  const db = getDb();
-  db.prepare(
-    'UPDATE results SET team_name = ?, angler1 = ?, angler2 = ?, total_weight = ?, num_fish = ?, big_bass_weight = ? WHERE id = ?'
-  ).run(team_name, angler1, angler2, total_weight || 0, num_fish || 0, big_bass_weight || null, id);
+  const sql = getDb();
+  await sql`
+    UPDATE results SET team_name = ${team_name}, angler1 = ${angler1}, angler2 = ${angler2},
+    total_weight = ${total_weight || 0}, num_fish = ${num_fish || 0}, big_bass_weight = ${big_bass_weight || null}
+    WHERE id = ${id}
+  `;
 
-  // Get the week_id for this result to recalculate
-  const weekId = week_id || (db.prepare('SELECT week_id FROM results WHERE id = ?').get(id) as { week_id: number })?.week_id;
-  if (weekId) recalculatePlacements(weekId);
+  const weekIdToUse = week_id || (await sql`SELECT week_id FROM results WHERE id = ${id}`)[0]?.week_id;
+  if (weekIdToUse) await recalculatePlacements(weekIdToUse);
 
   return NextResponse.json({ success: true });
 }
@@ -85,12 +85,11 @@ export async function DELETE(request: NextRequest) {
   const body = await request.json();
   if (!body.id) return NextResponse.json({ error: 'Missing result ID' }, { status: 400 });
 
-  const db = getDb();
-  // Get week_id before deleting
-  const row = db.prepare('SELECT week_id FROM results WHERE id = ?').get(body.id) as { week_id: number } | undefined;
-  db.prepare('DELETE FROM results WHERE id = ?').run(body.id);
+  const sql = getDb();
+  const row = await sql`SELECT week_id FROM results WHERE id = ${body.id}`;
+  await sql`DELETE FROM results WHERE id = ${body.id}`;
 
-  if (row) recalculatePlacements(row.week_id);
+  if (row[0]) await recalculatePlacements(row[0].week_id);
 
   return NextResponse.json({ success: true });
 }

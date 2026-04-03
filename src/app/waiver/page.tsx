@@ -4,10 +4,10 @@ import WaiverForm from "@/components/waiver/WaiverForm";
 
 export const dynamic = 'force-dynamic';
 
-export default function WaiverPage() {
-  const db = getDb();
-  const row = db.prepare("SELECT value FROM tournament_settings WHERE key = 'waiver_text'").get() as { value: string } | undefined;
-  const waiverText = row?.value || WAIVER_TEXT;
+export default async function WaiverPage() {
+  const sql = getDb();
+  const rows = await sql`SELECT value FROM tournament_settings WHERE key = 'waiver_text'`;
+  const waiverText = rows[0]?.value || WAIVER_TEXT;
 
   return (
     <div className="min-h-screen bg-[#faf6f0] py-8 sm:py-12">

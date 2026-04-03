@@ -1,7 +1,7 @@
 import NextAuth from 'next-auth';
 import Credentials from 'next-auth/providers/credentials';
 import { compareSync } from 'bcryptjs';
-import { getDb } from './db';
+import { neon } from '@neondatabase/serverless';
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
@@ -14,12 +14,9 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
       async authorize(credentials) {
         if (!credentials?.username || !credentials?.password) return null;
 
-        const db = getDb();
-        const user = db.prepare('SELECT * FROM admin_users WHERE username = ?').get(credentials.username) as {
-          id: number;
-          username: string;
-          password_hash: string;
-        } | undefined;
+        const sql = neon(process.env.DATABASE_URL!);
+        const users = await sql`SELECT * FROM admin_users WHERE username = ${credentials.username as string}`;
+        const user = users[0];
 
         if (!user) return null;
 

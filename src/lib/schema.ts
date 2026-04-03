@@ -1,84 +1,104 @@
-export const SCHEMA = `
-CREATE TABLE IF NOT EXISTS admin_users (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  username TEXT NOT NULL UNIQUE,
-  password_hash TEXT NOT NULL,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+import { neon } from '@neondatabase/serverless';
 
-CREATE TABLE IF NOT EXISTS participants (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  full_name TEXT NOT NULL,
-  email TEXT,
-  phone TEXT NOT NULL,
-  emergency_contact_name TEXT,
-  emergency_contact_phone TEXT,
-  team_partner_name TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+export async function initializeDatabase() {
+  const sql = neon(process.env.DATABASE_URL!);
 
-CREATE TABLE IF NOT EXISTS waivers (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  participant_id INTEGER NOT NULL,
-  waiver_text TEXT NOT NULL,
-  -- Participant 1 (required)
-  p1_name TEXT NOT NULL,
-  p1_phone TEXT NOT NULL,
-  p1_signature_data TEXT NOT NULL,
-  p1_signature_type TEXT NOT NULL CHECK(p1_signature_type IN ('draw', 'type')),
-  -- Participant 2 (optional)
-  p2_name TEXT,
-  p2_phone TEXT,
-  p2_signature_data TEXT,
-  p2_signature_type TEXT CHECK(p2_signature_type IN ('draw', 'type') OR p2_signature_type IS NULL),
-  -- Parent/Guardian (optional, required if under 18)
-  guardian_name TEXT,
-  guardian_relationship TEXT,
-  guardian_signature_data TEXT,
-  guardian_signature_type TEXT CHECK(guardian_signature_type IN ('draw', 'type') OR guardian_signature_type IS NULL),
-  signed_at TEXT NOT NULL DEFAULT (datetime('now')),
-  ip_address TEXT,
-  FOREIGN KEY (participant_id) REFERENCES participants(id)
-);
+  await sql`
+    CREATE TABLE IF NOT EXISTS admin_users (
+      id SERIAL PRIMARY KEY,
+      username TEXT NOT NULL UNIQUE,
+      password_hash TEXT NOT NULL,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `;
 
-CREATE TABLE IF NOT EXISTS tournament_weeks (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  week_number INTEGER NOT NULL,
-  date TEXT NOT NULL,
-  location TEXT NOT NULL DEFAULT 'Lake Santa Fe',
-  notes TEXT,
-  is_upcoming INTEGER NOT NULL DEFAULT 0,
-  created_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
+  await sql`
+    CREATE TABLE IF NOT EXISTS participants (
+      id SERIAL PRIMARY KEY,
+      full_name TEXT NOT NULL,
+      email TEXT,
+      phone TEXT NOT NULL,
+      emergency_contact_name TEXT,
+      emergency_contact_phone TEXT,
+      team_partner_name TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `;
 
-CREATE TABLE IF NOT EXISTS results (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  week_id INTEGER NOT NULL,
-  team_name TEXT NOT NULL,
-  angler1 TEXT NOT NULL,
-  angler2 TEXT NOT NULL,
-  total_weight REAL NOT NULL DEFAULT 0,
-  num_fish INTEGER NOT NULL DEFAULT 0,
-  big_bass_weight REAL,
-  placement INTEGER,
-  FOREIGN KEY (week_id) REFERENCES tournament_weeks(id)
-);
+  await sql`
+    CREATE TABLE IF NOT EXISTS waivers (
+      id SERIAL PRIMARY KEY,
+      participant_id INTEGER NOT NULL REFERENCES participants(id),
+      waiver_text TEXT NOT NULL,
+      p1_name TEXT NOT NULL,
+      p1_phone TEXT NOT NULL,
+      p1_signature_data TEXT NOT NULL,
+      p1_signature_type TEXT NOT NULL CHECK(p1_signature_type IN ('draw', 'type')),
+      p2_name TEXT,
+      p2_phone TEXT,
+      p2_signature_data TEXT,
+      p2_signature_type TEXT CHECK(p2_signature_type IN ('draw', 'type') OR p2_signature_type IS NULL),
+      guardian_name TEXT,
+      guardian_relationship TEXT,
+      guardian_signature_data TEXT,
+      guardian_signature_type TEXT CHECK(guardian_signature_type IN ('draw', 'type') OR guardian_signature_type IS NULL),
+      signed_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      ip_address TEXT
+    )
+  `;
 
-CREATE TABLE IF NOT EXISTS week_photos (
-  id INTEGER PRIMARY KEY AUTOINCREMENT,
-  week_id INTEGER NOT NULL,
-  filename TEXT NOT NULL,
-  caption TEXT,
-  created_at TEXT NOT NULL DEFAULT (datetime('now')),
-  FOREIGN KEY (week_id) REFERENCES tournament_weeks(id)
-);
+  await sql`
+    CREATE TABLE IF NOT EXISTS tournament_weeks (
+      id SERIAL PRIMARY KEY,
+      week_number INTEGER NOT NULL,
+      date TEXT NOT NULL,
+      location TEXT NOT NULL DEFAULT 'Lake Santa Fe',
+      notes TEXT,
+      is_upcoming BOOLEAN NOT NULL DEFAULT false,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `;
 
-CREATE TABLE IF NOT EXISTS tournament_settings (
-  key TEXT PRIMARY KEY,
-  value TEXT NOT NULL,
-  updated_at TEXT NOT NULL DEFAULT (datetime('now'))
-);
-`;
+  await sql`
+    CREATE TABLE IF NOT EXISTS results (
+      id SERIAL PRIMARY KEY,
+      week_id INTEGER NOT NULL REFERENCES tournament_weeks(id),
+      team_name TEXT NOT NULL,
+      angler1 TEXT NOT NULL,
+      angler2 TEXT NOT NULL,
+      total_weight REAL NOT NULL DEFAULT 0,
+      num_fish INTEGER NOT NULL DEFAULT 0,
+      big_bass_weight REAL,
+      placement INTEGER
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS week_photos (
+      id SERIAL PRIMARY KEY,
+      week_id INTEGER NOT NULL REFERENCES tournament_weeks(id),
+      filename TEXT NOT NULL,
+      caption TEXT,
+      created_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  await sql`
+    CREATE TABLE IF NOT EXISTS tournament_settings (
+      key TEXT PRIMARY KEY,
+      value TEXT NOT NULL,
+      updated_at TIMESTAMP NOT NULL DEFAULT NOW()
+    )
+  `;
+
+  // Seed default settings if empty
+  const count = await sql`SELECT COUNT(*) as count FROM tournament_settings`;
+  if (Number(count[0].count) === 0) {
+    for (const [key, value] of Object.entries(DEFAULT_SETTINGS)) {
+      await sql`INSERT INTO tournament_settings (key, value) VALUES (${key}, ${value}) ON CONFLICT (key) DO NOTHING`;
+    }
+  }
+}
 
 export const WAIVER_TEXT = `LIABILITY WAIVER & RELEASE
 Lake Santa Fe Friday Night Shoot Out • Little Lake Santa Fe Boat Ramp (21B) • Melrose, Florida
