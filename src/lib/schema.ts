@@ -1,7 +1,8 @@
 import { neon } from '@neondatabase/serverless';
 
 export async function initializeDatabase() {
-  const sql = neon(process.env.DATABASE_URL!);
+  const dbUrl = (process.env.DATABASE_URL || process.env.POSTGRES_URL || '').replace(/[?&]channel_binding=[^&]*/g, '').replace(/\?&/, '?');
+  const sql = neon(dbUrl);
 
   await sql`
     CREATE TABLE IF NOT EXISTS admin_users (
