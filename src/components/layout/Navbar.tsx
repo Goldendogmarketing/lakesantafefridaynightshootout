@@ -17,6 +17,7 @@ export default function Navbar() {
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-6">
             <Link href="/" className="hover:text-[#f5b731] transition-colors">Home</Link>
+            <Link href="/rules" className="hover:text-[#f5b731] transition-colors">Rules</Link>
             <Link href="/results" className="hover:text-[#f5b731] transition-colors">Results</Link>
             <Link href="/waiver" className="bg-[#c45e10] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#e8940c] transition-colors">
               Sign Waiver
@@ -43,6 +44,7 @@ export default function Navbar() {
         {menuOpen && (
           <div className="md:hidden pb-4 space-y-2">
             <Link href="/" className="block py-2 hover:text-[#f5b731]" onClick={() => setMenuOpen(false)}>Home</Link>
+            <Link href="/rules" className="block py-2 hover:text-[#f5b731]" onClick={() => setMenuOpen(false)}>Rules</Link>
             <Link href="/results" className="block py-2 hover:text-[#f5b731]" onClick={() => setMenuOpen(false)}>Results</Link>
             <Link href="/waiver" className="block bg-[#c45e10] text-white px-4 py-2 rounded-lg font-semibold text-center hover:bg-[#e8940c]" onClick={() => setMenuOpen(false)}>
               Sign Waiver
