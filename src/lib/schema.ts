@@ -81,6 +81,21 @@ export async function initializeDatabase() {
   `;
 
   await sql`
+    CREATE TABLE IF NOT EXISTS week_entries (
+      id SERIAL PRIMARY KEY,
+      participant_id INTEGER NOT NULL REFERENCES participants(id),
+      week_id INTEGER NOT NULL REFERENCES tournament_weeks(id),
+      boat_number TEXT,
+      paid BOOLEAN NOT NULL DEFAULT false,
+      payment_amount REAL NOT NULL DEFAULT 50.00,
+      notes TEXT,
+      signup_source TEXT NOT NULL DEFAULT 'admin',
+      created_at TIMESTAMP NOT NULL DEFAULT NOW(),
+      UNIQUE(participant_id, week_id)
+    )
+  `;
+
+  await sql`
     CREATE TABLE IF NOT EXISTS week_photos (
       id SERIAL PRIMARY KEY,
       week_id INTEGER NOT NULL REFERENCES tournament_weeks(id),

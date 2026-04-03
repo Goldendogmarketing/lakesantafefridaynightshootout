@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { getDb } from "@/lib/db";
 import type { Result, TournamentWeek } from "@/types";
 
@@ -42,12 +43,14 @@ export default async function HomePage() {
       <section className="relative bg-gradient-to-br from-[#1a0e04] via-[#4a2008] to-[#7c3a0e] text-white overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-orange-900/30" />
         <div className="relative max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 sm:py-28 text-center">
-          <h1 className="text-4xl sm:text-6xl font-extrabold tracking-tight mb-2">
-            <span className="text-[#f5b731]">Lake Santa Fe</span>
-          </h1>
-          <h2 className="text-2xl sm:text-4xl font-bold text-white mb-1">Friday Night</h2>
-          <h2 className="text-3xl sm:text-5xl font-extrabold text-[#e8940c] mb-2">SHOOT OUT</h2>
-          <p className="text-xl text-orange-200/70 italic">Bass Tournament</p>
+          <Image
+            src="/logo.png"
+            alt="Lake Santa Fe Friday Night Shoot Out Bass Tournament"
+            width={400}
+            height={400}
+            className="mx-auto mb-4 max-w-[280px] sm:max-w-[400px] h-auto drop-shadow-2xl"
+            priority
+          />
           <p className="text-lg sm:text-xl text-orange-200/80 mb-2">
             Melrose, Florida &bull; Friday Nights &bull; 6 PM - 9 PM
           </p>

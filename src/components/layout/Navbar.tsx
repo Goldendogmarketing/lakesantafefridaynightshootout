@@ -19,8 +19,11 @@ export default function Navbar() {
             <Link href="/" className="hover:text-[#f5b731] transition-colors">Home</Link>
             <Link href="/rules" className="hover:text-[#f5b731] transition-colors">Rules</Link>
             <Link href="/results" className="hover:text-[#f5b731] transition-colors">Results</Link>
-            <Link href="/waiver" className="bg-[#c45e10] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#e8940c] transition-colors">
-              Sign Waiver
+            <Link href="/signup" className="bg-[#c45e10] text-white px-4 py-2 rounded-lg font-semibold hover:bg-[#e8940c] transition-colors">
+              Sign Up
+            </Link>
+            <Link href="/waiver" className="hover:text-[#f5b731] transition-colors">
+              Waiver
             </Link>
           </div>
 
@@ -46,9 +49,10 @@ export default function Navbar() {
             <Link href="/" className="block py-2 hover:text-[#f5b731]" onClick={() => setMenuOpen(false)}>Home</Link>
             <Link href="/rules" className="block py-2 hover:text-[#f5b731]" onClick={() => setMenuOpen(false)}>Rules</Link>
             <Link href="/results" className="block py-2 hover:text-[#f5b731]" onClick={() => setMenuOpen(false)}>Results</Link>
-            <Link href="/waiver" className="block bg-[#c45e10] text-white px-4 py-2 rounded-lg font-semibold text-center hover:bg-[#e8940c]" onClick={() => setMenuOpen(false)}>
-              Sign Waiver
+            <Link href="/signup" className="block bg-[#c45e10] text-white px-4 py-2 rounded-lg font-semibold text-center hover:bg-[#e8940c]" onClick={() => setMenuOpen(false)}>
+              Sign Up
             </Link>
+            <Link href="/waiver" className="block py-2 hover:text-[#f5b731]" onClick={() => setMenuOpen(false)}>Waiver</Link>
           </div>
         )}
       </div>

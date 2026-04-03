@@ -65,6 +65,29 @@ export interface WeekPhoto {
   created_at: string;
 }
 
+export interface WeekEntry {
+  id: number;
+  participant_id: number;
+  week_id: number;
+  boat_number: string | null;
+  paid: boolean;
+  payment_amount: number;
+  notes: string | null;
+  signup_source: 'admin' | 'online';
+  created_at: string;
+}
+
+export interface WeekEntryWithParticipant extends WeekEntry {
+  full_name: string;
+  phone: string;
+  team_partner_name: string | null;
+  waiver_signed: number;
+}
+
+export interface ParticipantWithHistory extends ParticipantWithWaiver {
+  weeks_fished: number;
+}
+
 export interface TournamentSettings {
   [key: string]: string;
 }
